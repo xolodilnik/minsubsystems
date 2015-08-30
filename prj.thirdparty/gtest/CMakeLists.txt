@@ -1,0 +1,10 @@
+PROJECT(gtest)
+
+ADD_DEFINITIONS(-DGTEST_HAS_PTHREAD=0)
+ADD_LIBRARY(gtest STATIC gtest.h src/gtest-all.cc)
+
+install (TARGETS gtest
+LIBRARY DESTINATION lib
+ARCHIVE DESTINATION lib)
+
+INSTALL(FILES gtest.h DESTINATION include/gtest)

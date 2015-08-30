@@ -1,0 +1,183 @@
+MINIMGAPI Changelog
+
+Version 2.1.1
+11-Jul-2013
+
+
+
++++ New functionality:
+
++ Added macros for manipulating with single bits of images
+
+GET_IMAGE_LINE_BIT(p, x)
+Returns value of x-th bit of image line pointed by p. If bit is on,
+returns not just 1, but returns it in the same position within byte,
+in which it was within the image byte.
+
+SET_IMAGE_LINE_BIT(p, x)
+Sets x-th bit of image line pointed by p to be 1.
+
+CLEAR_IMAGE_LINE_BIT(p, x)
+Sets x-th bit of image line pointed by p to be 0.
+
+INVERT_IMAGE_LINE_BIT(p, x)
+Switches the value of x-th bit of image line pointed by p.
+
+
++ Added set of functions for filling MinImg structure as a pointer to some
+special cases of user memory buffer (similar to WrapSolidBufferWithMinImage)
+
+MINIMGAPI_API int WrapScalarWithMinImage(
+    MinImg *p_image,
+    void   *p_scalar,
+    MinTyp  element_type);
+The function fills MinImg structure to represent user scalar as one-channel,
+one-pixel image.
+
+MINIMGAPI_API int WrapPixelWithMinImage(
+    MinImg *p_image,
+    void   *p_pixel,
+    int     channels,
+    MinTyp  element_type);
+The function fills MinImg structure to represent user scalar as one-pixel image.
+
+MINIMGAPI_API int WrapScalarVectorWithMinImage(
+    MinImg          *p_image,
+    void            *p_vector,
+    int              size,
+    DirectionOption  direction,
+    MinTyp           element_type);
+The function fills MinImg structure to represent user vector of scalars as
+one-line image (horizontal or vertical, depending on @c direction).
+
+MINIMGAPI_API int WrapPixelVectorWithMinImage(
+    MinImg          *p_image,
+    void            *p_vector,
+    int              size,
+    DirectionOption  direction,
+    int              channels,
+    MinTyp           element_type);
+The function fills MinImg structure to represent user vector of pixels as
+one-line image (horizontal or vertical, depending on @c direction).
+
+
++ Added some functions for checking whether image prototype fits
+given conditions of not
+
+MINIMGAPI_API int AssureMinImageFits(
+    const MinImg *p_image,
+    MinTyp        element_type,
+    int           channels      IS_BY_DEFAULT(-1),
+    int           width         IS_BY_DEFAULT(-1),
+    int           height        IS_BY_DEFAULT(-1));
+The function checks the image header for congruence with given parameters.
+Parameters given as -1 are considered not restricted and are not checked.
+
+MINIMGAPI_API int AssureMinImageIsScalar(
+    const MinImg *p_image);
+The function checks whether image has exactly one element (channel) or not.
+
+AssureMinImageIsPixel(
+    const MinImg *p_image);
+The function checks whether image has exactly one pixel or not.
+
+
++ Added functions to check if two images have the same type of contents
+
+MINIMGAPI_API int CompareMinImagePixels(
+    const MinImg *p_image_a,
+    const MinImg *p_image_b);
+The function compares types of elements (channels) and number of channels
+in pixels of two images.
+
+MINIMGAPI_API int CompareMinImageTypes(
+    const MinImg *p_image_a,
+    const MinImg *p_image_b);
+The function compares types of elements (channels) of two images.
+
+
++ Added function to copy fragment of an image into fragment of another one
+
+MINIMGAPI_API int CopyMinImageFragment(
+    const MinImg *p_dst_image,
+    const MinImg *p_src_image,
+    int           dst_x0,
+    int           dst_y0,
+    int           src_x0,
+    int           src_y0,
+    int           width,
+    int           height);
+The function copies fragment of one image to fragment of another.
+It was nesessary for manipulation with bit images, because it's fragments
+can be not byte-aligned.
+
+
++ Added function to resample an image, that is //////TODO: add description
+
+MINIMGAPI_API int ResampleMinImage(
+    const MinImg *p_dst_image,
+    const MinImg *p_src_image,
+    double        x_phase IS_BY_DEFAULT(0.5),
+    double        y_phase IS_BY_DEFAULT(0.5));
+The function resamples an image in the sense of changing image sample rate.
+The source image pixels are copied to destination one as whole entities,
+with no interpolation.
+
+
+
+*** Functionality changes:
+
+* MINIMGAPI_API int CheckMinImagesTangle(
+    uint32_t     *p_result,
+    const MinImg *p_dst_image,
+    const MinImg *p_src_image)
+The function was significantly reworked.
+
+* MINIMGAPI_API int FillMinImage(
+    const MinImg *p_image,
+    const void   *p_canvas,
+    int           value_size)
+Now it's possible to fill image with multi-pixel pattern
+(but each line fills individually, restarting pattern).
+
+* MINIMGAPI_API int InterleaveMinImages(
+    const MinImg        *p_dst_image,
+    const MinImg *const *p_p_src_images,
+    int                  num_src_images)
+Stub was replaced with actual implementation.
+
+* MINIMGAPI_API int TransposeMinImage(
+    const MinImg *p_dst_image,
+    const MinImg *p_src_image)
+Refactored, added implementation for bit images.
+
+* MINIMGAPI_API int CopyMinImageChannels(
+    const MinImg *p_dst_image,
+    const MinImg *p_src_image,
+    const int    *p_dst_channels,
+    const int    *p_src_channels,
+    int           num_channels)
+The function was refactored.
+
+* Some functions have got internal inline implementatilns, so minimgapi
+has been generally accelerated.
+
+
+
+### Fixed bugs:
+
+# CloneMinImagePrototype fixed for case where p_dst_image == p_src_image.
+Now it correctly provies that destination image has the same prototype
+as the source one, regardless the image headers are the same or not.
+
+# GetMinImageRegion fixed for case where p_dst_image == p_src_image.
+Now in that case it returns BAD_ARGS or gets subimage correctly,
+depending on rules parameter.
+
+# Additonal assurance added in AssureMinImageIsValid to check that image lines
+do not intersect in memory.
+
+# Copying of solid images fixed in CopyMinImage. Before stride of the image was
+usde instead of image width (in bytes). That can differ for one-line images.
+
+# CopyMinImage fixed for bit images with length non-multiple of 8.
